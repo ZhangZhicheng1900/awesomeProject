@@ -17,9 +17,11 @@ GOOS=linux go build -o _output/mergexls_linux mergexls/mergexls.go
 manually install python3 pkg from internet,  for example https://www.python.org/ftp/python/3.10.4/python-3.10.4-amd64.exe
 
 manually download 
+
 ```pip3 download pyexcel pyexcel-xls pyexcel-xlsx```
 
 and
+
 ```pip3 install `ls *.whl````
 
 ## step 2
