@@ -9,7 +9,11 @@ import (
 	"strings"
 
 	"awesomeProject/xlsxop"
+
+	excellizev2 "github.com/xuri/excelize/v2"
 )
+
+var versionStr = "202204261128"
 
 var pythonXls2XlsxScript = `
 import pyexcel as p
@@ -20,17 +24,6 @@ p.save_book_as(file_name=xlsFile,
                library='pyexcel-xls',
                skip_hidden_row_and_column=False,
                dest_file_name=xlsxFile)
-`
-
-var pythonXlsx2XlsScript = `
-import pyexcel as p
-import sys
-xlsxFile = sys.argv[1]
-xlsFile = sys.argv[2]
-p.save_book_as(file_name=xlsxFile,
-               library='pyexcel-xlsx',
-               skip_hidden_row_and_column=False,
-               dest_file_name=xlsFile)
 `
 
 const (
@@ -50,7 +43,7 @@ func WritePythonScript() {
 }
 
 func ExcelTranslate(pythonFile, srcPath, newPath string) error {
-	// 删除已经存在同名xls文件
+	// 删除已经存在同名xlsx文件
 	if _, err := os.Stat(newPath); err == nil {
 		os.Remove(newPath)
 	}
@@ -59,7 +52,7 @@ func ExcelTranslate(pythonFile, srcPath, newPath string) error {
 	if err != nil {
 		return err
 	}
-	// 查看xls文件是否成功生成
+	// 查看xlsx文件是否成功生成
 	if _, err := os.Stat(newPath); err != nil {
 		return fmt.Errorf("using %s translate %s failed", pythonFile, srcPath)
 	}
@@ -112,7 +105,34 @@ func MergeXlsxSheets() map[string][][]string {
 }
 
 func GenerateMerged(xlsxFilePath string, content map[string][][]string) {
-	if err := xlsxop.Write(xlsxFilePath, content); err != nil {
+	styleFunc := func(xlsxFile *excellizev2.File) error {
+		styleID, err := xlsxFile.NewStyle(&excellizev2.Style{
+			Alignment: &excellizev2.Alignment{
+				WrapText:   true,
+				Horizontal: "left",
+				Vertical:   "top",
+			},
+		})
+		if err != nil {
+			return fmt.Errorf("NewStyle error, %v", err)
+		}
+
+		sheets := xlsxFile.GetSheetList()
+		for _, sheetName := range sheets {
+			if err := xlsxFile.SetRowHeight(sheetName, 2, 100); err != nil {
+				return fmt.Errorf("SetRowHeight error, %v", err)
+			}
+			if err := xlsxFile.SetColStyle(sheetName, "A:D", styleID); err != nil {
+				return fmt.Errorf("SetColStyle error, %v", err)
+			}
+			if err := xlsxFile.SetColWidth(sheetName, "A", "D", 60); err != nil {
+				return fmt.Errorf("SetColWidth error, %v", err)
+			}
+		}
+		return nil
+	}
+
+	if err := xlsxop.Write(xlsxFilePath, content, styleFunc); err != nil {
 		Fatal("generate merged %s error, %v", xlsxFilePath, err)
 	}
 }
@@ -126,7 +146,13 @@ func main() {
 	oFilePath := flag.String("output-file-name", "merged.xlsx", "output xlsx file name, will created "+
 		"at 'to-merge-xls-dir'/tmp_merge")
 	pythonCMD = flag.String("python-cmd", "python", "python cmd, maybe 'python' or 'python3'")
+	version := flag.Bool("version", false, "version of this tool")
 	flag.Parse()
+
+	if *version {
+		fmt.Println(versionStr)
+		return
+	}
 
 	tempDir = path.Join(*dirPath, "tmp_merge")
 	os.RemoveAll(tempDir)

@@ -7,6 +7,8 @@ import (
 	excellizev2 "github.com/xuri/excelize/v2"
 )
 
+const defaultSheet1 = "Sheet1"
+
 func Read(filePath string) map[string][][]string {
 	var res = make(map[string][][]string)
 	excelEntryF, excelEntryErr := excellizev2.OpenFile(filePath)
@@ -26,7 +28,9 @@ func Read(filePath string) map[string][][]string {
 	return res
 }
 
-func Write(filePath string, content map[string][][]string) error {
+type ExcelOpFunc func(*excellizev2.File) error
+
+func Write(filePath string, content map[string][][]string, fn ExcelOpFunc) error {
 	var sheets = make([]string, 0)
 	for name, _ := range content {
 		sheets = append(sheets, name)
@@ -37,13 +41,22 @@ func Write(filePath string, content map[string][][]string) error {
 	for _, sheetName := range sheets {
 		sheetContent := content[sheetName]
 		xlsxFile.NewSheet(sheetName)
+
 		for i := 0; i < len(sheetContent); i++ {
 			if err := xlsxFile.SetSheetRow(sheetName, fmt.Sprintf("A%d", i+1), &sheetContent[i]); err != nil {
-
 				return fmt.Errorf("SetSheetRow error, %v", err)
 			}
 		}
 	}
-	xlsxFile.DeleteSheet("Sheet1")
+	if _, found := content[defaultSheet1]; !found && len(content) != 0 {
+		xlsxFile.DeleteSheet(defaultSheet1)
+	}
+
+	if fn != nil {
+		if err := fn(xlsxFile); err != nil {
+			return err
+		}
+	}
+
 	return xlsxFile.SaveAs(filePath)
 }
