@@ -4,6 +4,7 @@ import (
 	"awesomeProject/xlsxop"
 	"fmt"
 	"os"
+	"sort"
 	"time"
 )
 
@@ -93,7 +94,17 @@ func main() {
 
 	var minuteCount, halfHourCount int
 	latest := findLatestOut(sheet)
-	for date, t := range latest {
+
+	var dates = make([]string, len(latest))
+	i := 0
+	for k, _ := range latest {
+		dates[i] = k
+		i++
+	}
+	sort.Strings(dates)
+
+	for _, date := range dates {
+		t := latest[date]
 		if !t.IsOverTime() {
 			continue
 		}
