@@ -116,4 +116,7 @@ func main() {
 	}
 
 	fmt.Printf("total overtime %d in minute, %.1f in hour(count by half hour)\n", minuteCount, float64(halfHourCount)*0.5)
+
+	fmt.Println("Press enter key to quit...")
+	fmt.Scanln()
 }
