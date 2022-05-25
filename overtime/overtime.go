@@ -9,10 +9,10 @@ import (
 )
 
 const (
-	InOutSheet            = "出入记录查询"
-	LineIndexBegin        = 2
-	FlagOut               = "出"
-	StandOverTimeBeginStr = "18:00:00"
+	InOutSheet               = "出入记录查询"
+	LineIndexBegin           = 2
+	FlagOut                  = "出"
+	StandardOverTimeBeginStr = "18:00:00"
 )
 
 const (
@@ -34,32 +34,32 @@ func parseTime(dateStr, timeStr string) time.Time {
 
 type OutTime struct {
 	time.Time
-	Date               string
-	standOverTimeBegin time.Time
+	Date                  string
+	standardOverTimeBegin time.Time
 }
 
 func (ot OutTime) OverTimeInMinute() int {
-	if ot.Before(ot.standOverTimeBegin) {
+	if ot.Before(ot.standardOverTimeBegin) {
 		return 0
 	}
-	return int(ot.Sub(ot.standOverTimeBegin) / time.Minute)
+	return int(ot.Sub(ot.standardOverTimeBegin) / time.Minute)
 }
 
 func (ot OutTime) OverTimeInHalfHour() int {
-	if ot.Before(ot.standOverTimeBegin) {
+	if ot.Before(ot.standardOverTimeBegin) {
 		return 0
 	}
-	return int(ot.Sub(ot.standOverTimeBegin) / (30 * time.Minute))
+	return int(ot.Sub(ot.standardOverTimeBegin) / (30 * time.Minute))
 }
 
 func (ot OutTime) IsOverTime() bool {
-	return ot.After(ot.standOverTimeBegin)
+	return ot.After(ot.standardOverTimeBegin)
 }
 
 func NewOutTime(date, t string) OutTime {
 	outTime := parseTime(date, t)
-	standOverTimeBegin := parseTime(date, StandOverTimeBeginStr)
-	return OutTime{Time: outTime, Date: date, standOverTimeBegin: standOverTimeBegin}
+	standOverTimeBegin := parseTime(date, StandardOverTimeBeginStr)
+	return OutTime{Time: outTime, Date: date, standardOverTimeBegin: standOverTimeBegin}
 }
 
 func findLatestOut(sheet [][]string) map[string]OutTime {
